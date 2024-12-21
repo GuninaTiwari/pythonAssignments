@@ -1,5 +1,24 @@
 #Group1 Insert 
+ALTER TABLE orders
+MODIFY COLUMN order_status VARCHAR(50) DEFAULT 'New Order';
+select * from orders;
+UPDATE orders
+SET order_status = 'Processing' 
+WHERE order_id = 2;
+UPDATE orders 
+SET order_status = 'Shipped' 
+WHERE order_id = 1;
+UPDATE orders
+SET order_status = 'Shipped' 
+WHERE order_id = 3;
+UPDATE orders
+SET order_status = 'Delivered' 
+WHERE order_id = 4;
+UPDATE orders
+SET order_status = 'Delivered' 
+WHERE order_id = 5;
 
+update orders set order_status = 'New Order' where order_id >5;
 use dbaseGroup1;
 
 INSERT INTO customers (first_name, last_name, email, phone_number, shipping_address)
