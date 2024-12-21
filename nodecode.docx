@@ -1,0 +1,463 @@
+project/
+
+├── controllers/
+
+│   └── reviewController.js
+
+├── models/
+
+│   └── reviewModel.js
+
+├── routes/
+
+│   └── reviewRoutes.js
+
+├── app.js
+
+├── config/
+
+│   └── db.js
+
+├── package.json
+
+└── .env
+
+structure  for NODE
+ 
+// models/reviewModel.js
+
+const mongoose = require('mongoose');
+ 
+const reviewSchema = new mongoose.Schema({
+
+    customer_email: { type: String, required: true },
+
+    product_title: { type: String, required: true },
+
+    review: { 
+
+        type: String, 
+
+        required: true, 
+
+        minlength: 10, 
+
+        maxlength: 500 
+
+    },
+
+    rating: { 
+
+        type: Number, 
+
+        required: true, 
+
+        min: 1, 
+
+        max: 5 
+
+    },
+
+    review_date: { type: Date, default: Date.now },
+
+    file_path: { type: String, default: null },
+
+    file_type: { type: String, default: null },
+
+    tags: { type: [String], default: [] }
+
+});
+ 
+const Review = mongoose.model('Review', reviewSchema);
+ 
+module.exports = Review;
+
+ 
+// controllers/reviewController.js
+
+const Review = require('../models/reviewModel');
+ 
+exports.createReview = async (req, res) => {
+
+    try {
+
+        const { customer_email, product_title, review, rating, file_path, file_type, tags } = req.body;
+ 
+        // Create a new review
+
+        const newReview = new Review({
+
+            customer_email,
+
+            product_title,
+
+            review,
+
+            rating,
+
+            file_path,
+
+            file_type,
+
+            tags
+
+        });
+ 
+        // Save to the database
+
+        await newReview.save();
+ 
+        res.status(201).json({
+
+            message: "Review added successfully",
+
+            review_id: newReview._id
+
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+
+            error: "An error occurred while creating the review",
+
+            details: error.message
+
+        });
+
+    }
+
+};
+
+ 
+// routes/reviewRoutes.js
+
+const express = require('express');
+
+const { createReview } = require('../controllers/reviewController');
+ 
+const router = express.Router();
+ 
+// POST /reviews - Create a new product review
+
+router.post('/reviews', createReview);
+ 
+module.exports = router;
+
+ 
+// config/db.js
+
+const mongoose = require('mongoose');
+ 
+const connectDB = async () => {
+
+    try {
+
+        await mongoose.connect(process.env.MONGO_URI, {
+
+            useNewUrlParser: true,
+
+            useUnifiedTopology: true
+
+        });
+
+        console.log('MongoDB Connected...');
+
+    } catch (error) {
+
+        console.error('Error connecting to MongoDB:', error.message);
+
+        process.exit(1);
+
+    }
+
+};
+ 
+module.exports = connectDB;
+
+ 
+// app.js
+
+require('dotenv').config();
+
+const express = require('express');
+
+const connectDB = require('./config/db');
+
+const reviewRoutes = require('./routes/reviewRoutes');
+ 
+// Initialize the app
+
+const app = express();
+ 
+// Connect to MongoDB
+
+connectDB();
+ 
+// Middleware
+
+app.use(express.json());
+ 
+// Routes
+
+app.use('/api', reviewRoutes);
+ 
+// Start the server
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+
+    console.log(`Server running on port ${PORT}`);
+
+});
+
+ 
+MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/e_commerce?retryWrites=true&w=majority
+
+PORT=5000
+
+ 
+npm init -y
+
+npm install express mongoose dotenv
+
+ 
+app.post('/reviews', async (req, res) => {
+  try {
+    const { customer_id, product_id, review, rating } = req.body;
+ 
+    // Log the incoming data for debugging purposes
+    console.log('Received data:', { customer_id, product_id, review, rating });
+ 
+    // Validate required fields
+    if (!customer_id || !product_id || !review || !rating) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+ 
+    // Ensure customer_id and product_id are integers
+    if (isNaN(customer_id) || isNaN(product_id)) {
+      return res.status(400).json({ message: "customer_id and product_id must be integers." });
+    }
+ 
+    // Create and save the review
+    const newReview = new Review({
+      customer_id: customer_id,
+      product_id: product_id,
+      review: review,
+      rating: rating,
+    });
+ 
+    const savedReview = await newReview.save();
+    res.status(201).json(savedReview); // Respond with the saved review data
+  } catch (error) {
+    console.error('Error saving review:', error);  // Log the error details
+    res.status(500).json({ message: 'Error saving review.', error: error.message });  // Send error message
+  }
+});
+ 
+const mongoose = require('mongoose');
+ 
+const reviewSchema = new mongoose.Schema({
+  customer_id: {
+    type: Number, // Ensure customer_id is stored as a Number (integer)
+    required: true,
+  },
+  product_id: {
+    type: Number, // Ensure product_id is stored as a Number (integer)
+    required: true,
+  },
+  review: {
+    type: String,
+    required: true,
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5,
+  },
+}, { timestamps: true });
+ 
+const Review = mongoose.model('Review', reviewSchema);
+ 
+module.exports = Review;
+ 
+ 
+const express = require('express');
+const axios = require('axios');
+const mongoose = require('mongoose');
+require('dotenv').config();
+ 
+const app = express();
+ 
+// Import Review model from models folder
+const Review = require('./models/Review');
+ 
+// Use express.json() to parse incoming JSON data in the request body
+app.use(express.json());
+ 
+// MongoDB URI
+const uri = 'mongodb+srv://roshnibirla17:manager@cluster0.xsfmw.mongodb.net/';
+ 
+// Connect to MongoDB
+mongoose.connect(uri)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((error) => console.error("Error connecting to MongoDB:", error));
+ 
+// POST /signin route to handle sign-in request
+app.post('/signin', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+ 
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required." });
+    }
+ 
+    // Forward the sign-in request to a Flask server (assuming Flask is running)
+    const response = await axios.post('http://127.0.0.1:2999/signin', { email, password });
+ 
+    // Forward Flask's response back to the client
+    res.json(response.data);
+  } catch (error) {
+    // Handle any error that occurs
+    if (error.response) {
+      res.status(error.response.status).json({ message: error.response.data.message });
+    } else {
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  }
+});
+ 
+// POST /review route to save a review
+app.post('/reviews', async (req, res) => {
+  try {
+    const { customer_id, product_id, review, rating } = req.body;
+ 
+    // Log the incoming data for debugging purposes
+    console.log('Received data:', { customer_id, product_id, review, rating });
+ 
+    // Validate required fields
+    if (!customer_id || !product_id || !review || !rating) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+ 
+    // Ensure customer_id and product_id are integers
+    if (isNaN(customer_id) || isNaN(product_id)) {
+      return res.status(400).json({ message: "customer_id and product_id must be integers." });
+    }
+ 
+    // Create and save the review
+    const newReview = new Review({
+      customer_id: customer_id,
+      product_id: product_id,
+      review: review,
+      rating: rating,
+    });
+ 
+    const savedReview = await newReview.save();
+    res.status(201).json(savedReview); // Respond with the saved review data
+  } catch (error) {
+    console.error('Error saving review:', error);  // Log the error details
+    res.status(500).json({ message: 'Error saving review.', error: error.message });  // Send error message
+  }
+});
+ 
+// GET /reviews/:product_id route to fetch reviews for a specific product
+app.get('/reviews/:product_id', async (req, res) => {
+  try {
+    const { product_id } = req.params; // Extract the product_id from the route params
+ 
+    // Validate and convert product_id to integer
+    const productIdAsInt = parseInt(product_id, 10);
+ 
+    if (isNaN(productIdAsInt)) {
+      return res.status(400).json({ message: "Product ID is required and must be an integer." });
+    }
+ 
+    // Find reviews for the given product_id
+    const reviews = await Review.find({ product_id: productIdAsInt }).exec();
+ 
+    if (reviews.length === 0) {
+      return res.status(404).json({ message: "No reviews found for this product." });
+    }
+ 
+    // Format the response
+    const formattedReviews = reviews.map(review => ({
+      customer_id: review.customer_id,
+      review: review.review,
+      rating: review.rating,
+      review_date: review.createdAt,  // Using createdAt timestamp as review_date
+    }));
+ 
+    // Return the reviews
+    res.status(200).json({
+      product_id: productIdAsInt,
+      reviews: formattedReviews,
+    });
+  } catch (error) {
+    console.error('Error retrieving reviews:', error);
+    res.status(500).json({ message: 'Error retrieving reviews.', error: error.message });
+  }
+});
+app.delete('/reviews/:review_id', async (req, res) => {
+  try {
+    const { review_id } = req.params;
+ 
+    // Validate review_id
+    if (!review_id) {
+      return res.status(400).json({ message: "Review ID is required." });
+    }
+ 
+    // Delete the review from the database
+    const deletedReview = await Review.findByIdAndDelete(review_id);
+ 
+    if (!deletedReview) {
+      return res.status(404).json({ message: "Review not found." });
+    }
+ 
+    // Return success message
+    res.status(200).json({ message: "Review deleted successfully" });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ message: 'Error deleting review.', error: error.message });
+  }
+});
+ 
+ 
+ 
+// Start the Express server on port 3999
+app.listen(3999, () => {
+  console.log('Node.js server running on http://127.0.0.1:3999');
+});
+ 
+ 
+server.js
+ 
+const mongoose = require('mongoose');
+ 
+const reviewSchema = new mongoose.Schema({
+  customer_id: {
+    type: Number, // Ensure customer_id is stored as a Number (integer)
+    required: true,
+  },
+  product_id: {
+    type: Number, // Ensure product_id is stored as a Number (integer)
+    required: true,
+  },
+  review: {
+    type: String,
+    required: true,
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5,
+  },
+}, { timestamps: true });
+ 
+const Review = mongoose.model('Review', reviewSchema);
+ 
+module.exports = Review; 
+ 
